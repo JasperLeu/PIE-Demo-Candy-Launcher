@@ -39,8 +39,8 @@ while True:
     # loop through all the results and boxes
     for r in detector_results:
         boxes = [box for box in r.boxes if box.conf > 0.6]
-        boxes.sort(key=lambda box: box.conf, reverse=True)
-        boxes = boxes[:1]
+        boxes.sort(key = lambda box: box.xywh[0][0].item())
+        #boxes = boxes[:1]
 
         currNum = 0
         if 0 < len(boxes) < selectedPerson:
