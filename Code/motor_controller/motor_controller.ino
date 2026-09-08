@@ -6,8 +6,11 @@ Servo winch; // 0-89 = wind, 91-180 = unwind
 Servo feeder; // 180 = recieve, ~90 = load
 Servo latch; // 5 = open, 35 = closed
 
-int WIND_TIME = 1000;
-int WIND_SPEED = 30;
+const int WIND_TIME = 1000;
+const int WIND_SPEED = 30;
+const int BEEP_DELAY = 300;
+const int BEEP_TIME = 100;
+const int SHOT_DELAY = 3000;
 
 // calculating angle
 float camFOV = 75.8; // fov of camera used
@@ -16,12 +19,18 @@ float offsetY = 0; // x, y offset from catapult pivot to camera in ft.
 float targetX = 0; // (right=+x, left=-x, forward=+y, backwards=-y)
 float targetY = 0; // position of targeted person
 
-float lastShot = millis();
-float shotDelay = 3000;
-bool active = true;
+// switch and buzzer
+const int switchPin = 8
+const int buzzer = 7;
+
+float lastBeep;
+float lastShot;
 
 void setup() {
   Serial.begin(9600);
+
+  pinMode(switchPin, INPUT_PULLUP);
+  pinMode(buzzer, OUTPUT)
 
   aim.attach(12);
   aim.write(40); // center
@@ -55,13 +64,26 @@ void loop()
     int angleToTarget = constrain(90 - math.atan(targetX/targetY)*180/PI, 0, 180);
     aim.write(angleToTarget);
     // shoot after delay
-    if (active && millis() - lastShot > shotDelay)
+    if (digitalRead(switchPin, LOW))
     {
-      fire(math.atan(targetX/targetY)*180/PI);
-      delay(1500);
-      lastShot = millis();
+      // beeping
+      if (millis() - lastBeep > BEEP_DELAY)
+        digitalWrite(buzzer, HIGH);
+      if (millis() - lastBeep > BEEP_DELAY + BEEP_TIME)
+      {
+        digitalWrite(buzzer, LOW);
+        lastBeep = millis();
+      }
+      // shooting
+      if (millis() - lastShot > SHOT_DELAY)
+      {
+        digitalWrite(buzzer, LOW);
+        fire(math.atan(targetX/targetY)*180/PI);
+        delay(1500);
+        lastShot = millis();
+      }
     }
-    else if(!active) // continously reset timer if not active
+    else if(digitalRead(switchPin, HIGH)) // continously reset timer if not active
       lastShot = millis();
   }
 }

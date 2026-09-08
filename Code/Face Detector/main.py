@@ -3,6 +3,7 @@ from ultralytics import YOLO
 import numpy as np
 import serial
 import time
+import keyboard
 
 # load models
 detector = YOLO("yolov8n.pt")
@@ -13,6 +14,9 @@ selectedPerson = 1
 white = (255, 255, 255)
 red = (0, 0, 255)
 FOV = 75.8
+
+rightDown = False
+leftDown = False
 
 # arduino communication
 arduino = serial.Serial(port='COM3', baudrate=9600, timeout=1)
@@ -39,9 +43,23 @@ while True:
     # loop through all the results and boxes
     for r in detector_results:
         boxes = [box for box in r.boxes if box.conf > 0.6]
-        boxes.sort(key = lambda box: box.xywh[0][0].item())
-        #boxes = boxes[:1]
+        boxes.sort(key=lambda box: box.xywh[0][0].item())
 
+        # inputs to switch targets
+        if keyboard.is_pressed("right"):
+            if not rightDown:
+                rightDown = True
+                selectedPerson = selectedPerson + 1 if len(boxes) > selectedPerson else selectedPerson
+                print("right")
+        else:
+            rightDown = False
+        if keyboard.is_pressed("left"):
+            if not leftDown:
+                leftDown = True
+                selectedPerson = selectedPerson - 1 if selectedPerson > 1 else selectedPerson
+                print("left")
+        else:
+            leftDown = False
         currNum = 0
         if 0 < len(boxes) < selectedPerson:
             selectedPerson = len(boxes)
